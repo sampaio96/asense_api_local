@@ -18,9 +18,13 @@ def recurrent_query(table_name, key_condition, filter_exp=None, projection=None,
     while True:
         response = table.query(**params)
         items.extend(response.get('Items', []))
-        if 'LastEvaluatedKey' not in response:
+
+        # Pagination Logic
+        last_key = response.get('LastEvaluatedKey')
+        if not last_key:
             break
-        params["ExclusiveStartKey"] = response['LastEvaluatedKey']
+
+        params["ExclusiveStartKey"] = last_key
 
     return items
 
@@ -37,7 +41,7 @@ def query_health_status(table_name, id_value, start_time=None, end_time=None):
         key_expr &= Key('time').le(end_time)
 
     response = table.query(
-        KeyConditionExpression=key_expression,
+        KeyConditionExpression=key_expr,
         FilterExpression=Attr('isReq').eq(False),
         ScanIndexForward=False,
         Limit=20

@@ -1,0 +1,11 @@
+{
+    "queryStringParameters": {
+        "table_name": "fft",
+        "id": "ASENSE00000017",
+        "start_time": "1763942400000",
+        "end_time": "1764115199000",
+        "minute": "0",
+        "merge_by_hour": "true",
+        "output_format": "map"
+    }
+}

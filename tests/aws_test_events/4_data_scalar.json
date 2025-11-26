@@ -1,0 +1,11 @@
+{
+    "queryStringParameters": {
+        "table_name": "data",
+        "id": "ASENSE00000003",
+        "start_time": "1764072000000",
+        "end_time": "1764075600000",
+        "minute": "0",
+        "merge_by_hour": "false",
+        "output_format": "map"
+    }
+}

@@ -1,13 +1,11 @@
 import math
-from utils.formatters import float_to_padded_string
+from utils.formatters import DataBuilder
 
 
-def process(raw_items):
+def process(raw_items, fmt='map'):
     processed_list = []
 
     for event in raw_items:
-        # 1. Parse Inputs
-        # DynamoDB usually returns Decimals for numbers, cast to float
         gxyz = [float(x) for x in event['gxyz']]
         scale_raw = int(event['scale'])
         odr = float(event['odr'])
@@ -15,7 +13,6 @@ def process(raw_items):
         client_id = event['id']
         seq = int(event.get('seq', 1))
 
-        # 2. Fix Scale (Logic from gyr_preprocessing)
         scale = float(scale_raw)
         if scale_raw < 14:
             scale = 2000 / math.pow(2, scale_raw)
@@ -27,7 +24,6 @@ def process(raw_items):
         message_i = seq - 1
         message_length = math.floor(len(gxyz) / 3)
 
-        # 3. Base Item
         item = {
             'id': client_id,
             'time': time,
@@ -36,26 +32,23 @@ def process(raw_items):
             'seq': seq
         }
 
-        # 4. Process Axis Data
-        gyr_x_data = {}
-        gyr_y_data = {}
-        gyr_z_data = {}
+        b_x = DataBuilder(fmt, 'time', 'val', 5)
+        b_y = DataBuilder(fmt, 'time', 'val', 5)
+        b_z = DataBuilder(fmt, 'time', 'val', 5)
 
         factor = scale * math.pow(2, -15)
 
         for i in range(message_length):
             ind = i + message_length * message_i
             t = ind / odr
-            key = float_to_padded_string(t, 5)
 
-            # CHANGED: Assign float directly, removed {'N': str(...)}
-            gyr_x_data[key] = gxyz[i * 3] * factor
-            gyr_y_data[key] = gxyz[i * 3 + 1] * factor
-            gyr_z_data[key] = gxyz[i * 3 + 2] * factor
+            b_x.add(t, gxyz[i * 3] * factor)
+            b_y.add(t, gxyz[i * 3 + 1] * factor)
+            b_z.add(t, gxyz[i * 3 + 2] * factor)
 
-        item['gyr_x'] = gyr_x_data
-        item['gyr_y'] = gyr_y_data
-        item['gyr_z'] = gyr_z_data
+        item['gyr_x'] = b_x.get_result()
+        item['gyr_y'] = b_y.get_result()
+        item['gyr_z'] = b_z.get_result()
 
         processed_list.append(item)
 

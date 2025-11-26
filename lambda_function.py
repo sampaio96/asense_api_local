@@ -3,7 +3,7 @@ import datetime
 import traceback
 from db import access
 from processors import factory
-from utils import mergers, formatters  # Ensure formatters is imported
+from utils import mergers
 
 
 def lambda_handler(event, context):
@@ -16,9 +16,14 @@ def lambda_handler(event, context):
     end_time_str = query_params.get('end_time')
     minute_str = query_params.get('minute', '0')
 
-    # Boolean Flags
     merge_by_hour = str(query_params.get('merge_by_hour', 'false')).lower() == 'true'
-    format_tuples = str(query_params.get('format_tuples', 'false')).lower() == 'true'  # <--- NEW PARAM
+
+    # Output Format: 'map' (default), 'tuple_array', 'dict_array'
+    output_format = query_params.get('output_format', 'map')
+    valid_formats = ['map', 'tuple_array', 'dict_array']
+    if output_format not in valid_formats:
+        # Fallback or error? Let's fallback for safety
+        output_format = 'map'
 
     if not all([topic, id_value]):
         return {'statusCode': 400, 'body': json.dumps({'error': 'Missing required parameters'})}
@@ -35,7 +40,7 @@ def lambda_handler(event, context):
         except Exception as e:
             return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
 
-    # 3. Validate Time params
+    # 3. Validate Time
     try:
         start_time = int(start_time_str)
         end_time = int(end_time_str)
@@ -47,7 +52,7 @@ def lambda_handler(event, context):
     table_name = f"asense_table_{topic}"
 
     try:
-        # 5. Fetch Raw Data
+        # 5. Fetch
         raw_items = []
         is_seq_table = topic in ['acc', 'gyr', 'ain']
 
@@ -59,12 +64,13 @@ def lambda_handler(event, context):
         if not raw_items:
             return {'statusCode': 200, 'body': json.dumps([])}
 
-        # 6. Process Data
+        # 6. Process Data (Pass output_format)
         processor = factory.get_processor(topic)
         if not processor:
             return {'statusCode': 400, 'body': json.dumps({'error': f'Unknown topic: {topic}'})}
 
-        processed_items = processor.process(raw_items)
+        # Inject format here!
+        processed_items = processor.process(raw_items, fmt=output_format)
 
         # 7. Sort
         processed_items.sort(key=lambda x: (x.get('time', 0), x.get('seq', 0)))
@@ -76,17 +82,11 @@ def lambda_handler(event, context):
             else:
                 processed_items = mergers.merge_items_by_hour(processed_items)
 
-        # 9. Final Formatting
+        # 9. Final Formatting (Dates)
         final_list = []
         for item in processed_items:
-            # Add ISO Datetime
             if 'time' in item:
                 item['datetime'] = datetime.datetime.utcfromtimestamp(item['time'] / 1000).isoformat() + 'Z'
-
-            # Apply Tuples Format if requested <--- NEW LOGIC
-            if format_tuples:
-                item = formatters.convert_to_tuples(item)
-
             final_list.append(dict(sorted(item.items())))
 
         return {

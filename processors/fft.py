@@ -1,8 +1,8 @@
 import math
-from utils.formatters import float_to_padded_string
+from utils.formatters import DataBuilder
 
 
-def process(raw_items):
+def process(raw_items, fmt='map'):
     processed_list = []
 
     for event in raw_items:
@@ -23,18 +23,16 @@ def process(raw_items):
             'axis': axis
         }
 
-        fft_data = {}
+        # Using 'freq' as label for dict_array
+        b_fft = DataBuilder(fmt, 'freq', 'val', 3)
         factor = scale * math.pow(2, -15)
 
         for i in range(message_length):
             fft_frequency = i / 1024 * 50
-            key = float_to_padded_string(fft_frequency, 3)
-
-            # CHANGED: Direct values
             amplitude = fft_vals[i] * factor
-            fft_data[key] = amplitude
+            b_fft.add(fft_frequency, amplitude)
 
-        item['fft'] = fft_data
+        item['fft'] = b_fft.get_result()
         processed_list.append(item)
 
     return processed_list

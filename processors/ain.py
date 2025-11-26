@@ -1,12 +1,11 @@
 import math
-from utils.formatters import float_to_padded_string
+from utils.formatters import DataBuilder
 
 
-def process(raw_items):
+def process(raw_items, fmt='map'):
     processed_list = []
 
     for event in raw_items:
-        # Assuming 'ain' is the key in the raw table (or check if it's 'axyz' reused)
         ain = [float(x) for x in event.get('ain', [])]
         scale = float(event.get('scale', 1))
         odr = float(event.get('odr', 1))
@@ -25,20 +24,18 @@ def process(raw_items):
             'seq': seq
         }
 
-        ain_a_data = {}
-        ain_b_data = {}
+        b_a = DataBuilder(fmt, 'time', 'val', 5)
+        b_b = DataBuilder(fmt, 'time', 'val', 5)
 
         for i in range(message_length):
             ind = i + message_length * message_i
             t = ind / odr
-            key = float_to_padded_string(t, 5)
 
-            # CHANGED: Direct values
-            ain_a_data[key] = ain[i * 2] * scale
-            ain_b_data[key] = ain[i * 2 + 1] * scale
+            b_a.add(t, ain[i * 2] * scale)
+            b_b.add(t, ain[i * 2 + 1] * scale)
 
-        item['ain_a'] = ain_a_data
-        item['ain_b'] = ain_b_data
+        item['ain_a'] = b_a.get_result()
+        item['ain_b'] = b_b.get_result()
 
         processed_list.append(item)
 

@@ -12,15 +12,14 @@ os.environ['AWS_PROFILE'] = 'asense-iot'
 from lambda_function import lambda_handler
 
 # --- CONFIGURATION ---
-# Select which test to run by uncommenting lines below
-
-# --- TEST 1: GYROSCOPE (Merged) ---
 TEST_TOPIC = 'gyr'
 TEST_ID = 'ASENSE00000005'
 TEST_START = '1764086399000'
-TEST_END = '1764089999000'  # Covers the 16 items you found
+TEST_END = '1764089999000'
 MERGE = 'true'
-FORMAT_TUPLES = 'true'  # <--- Set to true to test
+
+# Options: 'map', 'tuple_array', 'dict_array'
+FORMAT = 'tuple_array'
 
 event = {
     'queryStringParameters': {
@@ -30,11 +29,11 @@ event = {
         'end_time': TEST_END,
         'minute': '0',
         'merge_by_hour': MERGE,
-        'format_tuples': FORMAT_TUPLES # <--- Pass to lambda
+        'output_format': FORMAT  # <--- NEW KEY
     }
 }
 
-print(f"--- Request {TEST_TOPIC} (Merge: {MERGE}, Tuples: {FORMAT_TUPLES}) ---")
+print(f"--- Request {TEST_TOPIC} (Merge: {MERGE}, Format: {FORMAT}) ---")
 response = lambda_handler(event, None)
 
 print(f"Status Code: {response['statusCode']}")
@@ -42,18 +41,14 @@ print(f"Status Code: {response['statusCode']}")
 if response['statusCode'] == 200:
     body = json.loads(response['body'])
     print(f"Items found: {len(body)}")
-
     if len(body) > 0:
         print("First Item Preview:")
         preview = body[0].copy()
 
-        # If checking gyr, preview gyr_x list
-        if 'gyr_x' in preview:
-            # Print first 3 tuples to verify structure [key, val]
-            print(f"gyr_x (first 3): {preview['gyr_x'][:3]}")
-            preview['gyr_x'] = "..."
-        if 'gyr_y' in preview: preview['gyr_y'] = "..."
-        if 'gyr_z' in preview: preview['gyr_z'] = "..."
+        # Truncate large arrays for display
+        for k, v in preview.items():
+            if isinstance(v, list) and len(v) > 5:
+                preview[k] = f"{v[:3]} ... ({len(v)} items)"
 
         print(json.dumps(preview, indent=2))
 else:

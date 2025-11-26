@@ -68,8 +68,8 @@ def process(raw_items, fmt='map'):
                 w_s_avg_dict[f"w_s_avg_{i}"] = float(val) * 0.01
             item['w_s_avg'] = w_s_avg_dict
         else:
-            # Using 'index' as label for dict_array
-            b_ws = DataBuilder(fmt, 'index', 'val', 0)
+            # Using 'time' as label for dict_array
+            b_ws = DataBuilder(fmt, 'time', 'val', 0)
             for i, val in enumerate(w_s_avg):
                 b_ws.add(i, float(val) * 0.01)
             item['w_s_avg'] = b_ws.get_result()

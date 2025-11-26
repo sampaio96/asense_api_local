@@ -38,11 +38,11 @@ SCENARIOS = [
 
     # --- DATA (Scalar) ---
     {
-        "name": "Data #16 (Nov 23) - Expect Success",
+        "name": "Data #16 (Nov 24) - Expect Success",
         "topic": "data",
         "id": "ASENSE00000016",
-        "start": "2025-11-23 00:00:00",
-        "end": "2025-11-23 23:59:59",
+        "start": "2025-11-24 00:00:00",
+        "end": "2025-11-24 23:59:59",
         "expect_fail": False
     },
     {
@@ -56,11 +56,11 @@ SCENARIOS = [
 
     # --- FFT ---
     {
-        "name": "FFT #05 (Nov 23) - Expect Success",
+        "name": "FFT #17 (Nov 24-25) - Expect Success",
         "topic": "fft",
-        "id": "ASENSE00000005",
-        "start": "2025-11-23 00:00:00",
-        "end": "2025-11-23 23:59:59",
+        "id": "ASENSE00000017",
+        "start": "2025-11-24 00:00:00",
+        "end": "2025-11-25 23:59:59",
         "expect_fail": False
     },
     {

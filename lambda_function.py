@@ -21,7 +21,8 @@ def lambda_handler(event, context):
     start_time_str = query_params.get('start_time')
     end_time_str = query_params.get('end_time')
 
-    # Merge default is now TRUE
+    # Feature Flags
+    timestamps_only = str(query_params.get('timestamps_only', 'false')).lower() == 'true'
     merge_param = str(query_params.get('merge', 'true')).lower()
     merge = merge_param != 'false'
 
@@ -73,8 +74,25 @@ def lambda_handler(event, context):
     table_name = f"asense_table_{topic}"
 
     try:
-        # 5. Fetch with Pagination (2048 Limit)
-        # The loop inside access.py ensures we get UP TO 2048 items.
+        # --- NEW: TIMESTAMPS ONLY ROUTE ---
+        if timestamps_only:
+            if topic != 'data':
+                return {
+                    'statusCode': 400,
+                    'headers': cors_headers,
+                    'body': json.dumps({'error': "'timestamps_only' is currently supported for 'data' table only."})
+                }
+
+            # Fetch using the GSI, no limit
+            ts_list = access.query_timestamps_only(table_name, id_value, start_time, end_time)
+
+            return {
+                'statusCode': 200,
+                'headers': cors_headers,
+                'body': json.dumps({'timestamps': ts_list, 'count': len(ts_list)})
+            }
+
+        # 5. Standard Fetch with Pagination
         raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time, limit=2048)
 
         if not raw_items:
@@ -105,7 +123,7 @@ def lambda_handler(event, context):
             else:
                 processed_items = mergers.merge_items_by_hour(processed_items)
 
-            # Post-Merge Cleanup: Remove metadata fields
+            # Post-Merge Cleanup
             for item in processed_items:
                 for field in ['seq', 'time', 'odr', 'scale']:
                     item.pop(field, None)

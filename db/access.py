@@ -69,3 +69,40 @@ def query_paginated(table_name, id_value, start_time, end_time, limit=2048):
         next_timestamp = int(last_key['time']) + 1
 
     return items, next_timestamp
+
+
+def query_timestamps_only(table_name, id_value, start_time, end_time):
+    """
+    Queries the 'id-time-index-only-keys' GSI.
+    Returns a list of integer timestamps.
+    Does NOT enforce a 2048 limit (fetches all keys in range).
+    """
+    table = dynamodb.Table(table_name)
+
+    # GSI Name provided by you
+    INDEX_NAME = 'id-time-index-only-keys'
+
+    key_condition = Key('id').eq(id_value) & Key('time').between(start_time, end_time)
+
+    timestamps = []
+    params = {
+        'IndexName': INDEX_NAME,
+        'KeyConditionExpression': key_condition,
+        # We only project 'time' to keep network payload from DB small
+        'ProjectionExpression': '#t',
+        'ExpressionAttributeNames': {'#t': 'time'}
+    }
+
+    while True:
+        response = table.query(**params)
+
+        # Extract just the time integer
+        batch = [int(item['time']) for item in response.get('Items', [])]
+        timestamps.extend(batch)
+
+        last_key = response.get('LastEvaluatedKey')
+        if not last_key:
+            break
+        params['ExclusiveStartKey'] = last_key
+
+    return timestamps

@@ -9,7 +9,8 @@ def process(raw_items, fmt='map'):
         gxyz = [float(x) for x in event['gxyz']]
         scale_raw = int(event['scale'])
         odr = float(event['odr'])
-        time = int(event['time'])
+        # Current assumption: event['time'] is the timestamp of the LAST sample in this packet
+        end_time_ms = int(event['time'])
         client_id = event['id']
         seq = int(event.get('seq', 1))
 
@@ -21,12 +22,11 @@ def process(raw_items, fmt='map'):
         elif scale_raw == 31:
             scale = 2000 / math.pow(2, 6)
 
-        message_i = seq - 1
         message_length = math.floor(len(gxyz) / 3)
 
         item = {
             'id': client_id,
-            'time': time,
+            'time': end_time_ms,
             'scale': scale,
             'odr': odr,
             'seq': seq
@@ -38,9 +38,14 @@ def process(raw_items, fmt='map'):
 
         factor = scale * math.pow(2, -15)
 
+        if odr > 0:
+            period_ms = 1000.0 / odr
+        else:
+            period_ms = 0
+
         for i in range(message_length):
-            ind = i + message_length * message_i
-            t = ind / odr
+            steps_back = (message_length - 1) - i
+            t = end_time_ms - (steps_back * period_ms)
 
             b_x.add(t, gxyz[i * 3] * factor)
             b_y.add(t, gxyz[i * 3 + 1] * factor)

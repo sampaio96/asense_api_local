@@ -7,6 +7,8 @@ from utils import mergers
 
 
 def lambda_handler(event, context):
+    print(f"Received Event: {json.dumps(event)}")  # DEBUG LOG
+
     cors_headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key,Authorization',
@@ -74,7 +76,7 @@ def lambda_handler(event, context):
     table_name = f"asense_table_{topic}"
 
     try:
-        # --- NEW: TIMESTAMPS ONLY ROUTE ---
+        # --- TIMESTAMPS ONLY ROUTE ---
         if timestamps_only:
             if topic != 'data':
                 return {
@@ -85,6 +87,7 @@ def lambda_handler(event, context):
 
             # Fetch using the GSI, no limit
             ts_list = access.query_timestamps_only(table_name, id_value, start_time, end_time)
+            print(f"Timestamps found: {len(ts_list)}")  # DEBUG LOG
 
             return {
                 'statusCode': 200,
@@ -94,6 +97,8 @@ def lambda_handler(event, context):
 
         # 5. Standard Fetch with Pagination
         raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time, limit=2048)
+
+        print(f"Items fetched: {len(raw_items)}")  # DEBUG LOG
 
         if not raw_items:
             return {
@@ -153,6 +158,7 @@ def lambda_handler(event, context):
 
     except Exception as e:
         traceback.print_exc()
+        print(f"ERROR: {str(e)}")  # DEBUG LOG
         return {
             'statusCode': 500,
             'headers': cors_headers,

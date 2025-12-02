@@ -128,17 +128,22 @@ def lambda_handler(event, context):
             else:
                 processed_items = mergers.merge_items_by_hour(processed_items)
 
-            # Post-Merge Cleanup
-            for item in processed_items:
-                for field in ['seq', 'time', 'odr', 'scale']:
-                    item.pop(field, None)
-
-        # 9. Final Formatting
+        # 9. Final Formatting (Enrich & Cleanup)
         final_list = []
         for item in processed_items:
-            # If not merged, we might still have 'time' and want a human-readable string
+            # A. Generate Datetime String (The "Anchor")
+            # We do this BEFORE popping 'time'.
             if 'time' in item:
                 item['datetime'] = datetime.datetime.utcfromtimestamp(item['time'] / 1000).isoformat() + 'Z'
+
+            # B. Cleanup Metadata
+            # We remove variable fields to clean up the root object, but keep 'datetime' as the human-readable anchor.
+            if topic in ['acc', 'gyr', 'ain']:
+                item.pop('time', None)
+                if merge:
+                    # Remove fields not needed after merging
+                    for field in ['seq', 'odr', 'scale']:
+                        item.pop(field, None)
 
             final_list.append(dict(sorted(item.items())))
 

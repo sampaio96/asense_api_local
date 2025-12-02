@@ -1,32 +1,9 @@
 import boto3
 from boto3.dynamodb.conditions import Key, Attr
+import decimal
 
 # Initialize globally for reuse
 dynamodb = boto3.resource('dynamodb')
-
-
-def recurrent_query(table_name, key_condition, filter_exp=None, projection=None, names=None, index_name=None):
-    table = dynamodb.Table(table_name)
-    items = []
-
-    params = {"KeyConditionExpression": key_condition}
-    if filter_exp: params["FilterExpression"] = filter_exp
-    if projection: params["ProjectionExpression"] = projection
-    if names: params["ExpressionAttributeNames"] = names
-    if index_name: params["IndexName"] = index_name
-
-    while True:
-        response = table.query(**params)
-        items.extend(response.get('Items', []))
-
-        # Pagination Logic
-        last_key = response.get('LastEvaluatedKey')
-        if not last_key:
-            break
-
-        params["ExclusiveStartKey"] = last_key
-
-    return items
 
 
 def query_health_status(table_name, id_value, start_time=None, end_time=None):
@@ -49,31 +26,51 @@ def query_health_status(table_name, id_value, start_time=None, end_time=None):
     return response.get('Items', [])
 
 
-def query_with_seq_filter(table_name, id_value, start_time, end_time, minute):
+def query_paginated(table_name, id_value, start_time, end_time, limit=2048):
     """
-    Uses the id-seq-index GSI to efficiently fetch blocks of data.
+    Queries DynamoDB using ID + Time index.
+    Accumulates items until 'limit' is reached or data is exhausted.
+    Returns (items_list, next_timestamp_or_none).
     """
-    GSI_NAME = 'id-seq-index'
-    NUM_SEQ_PER_BLOCK = 48
-    start_seq = (minute * NUM_SEQ_PER_BLOCK) + 1
-    end_seq = ((minute + 1) * NUM_SEQ_PER_BLOCK)
+    table = dynamodb.Table(table_name)
 
-    # Query GSI for ID and Seq range
-    key_condition = Key('id').eq(id_value) & Key('seq').between(start_seq, end_seq)
-
-    # Filter results by time (since time isn't in the GSI key)
-    filter_expr = Attr('time').between(start_time, end_time)
-
-    # Fetch full items directly using the Index
-    return recurrent_query(
-        table_name,
-        key_condition,
-        filter_exp=filter_expr,
-        index_name=GSI_NAME
-    )
-
-
-def query_standard(table_name, id_value, start_time, end_time):
-    """Standard query for tables without the seq logic (fft, data)."""
     key_condition = Key('id').eq(id_value) & Key('time').between(start_time, end_time)
-    return recurrent_query(table_name, key_condition)
+
+    items = []
+    last_key = None
+
+    params = {
+        'KeyConditionExpression': key_condition,
+        # We set an initial limit, but we must update it in the loop
+        # to avoid over-fetching if we only need a few more items.
+        'Limit': limit
+    }
+
+    while True:
+        # Update limit to fetch only what we need to reach the target
+        needed = limit - len(items)
+        if needed <= 0:
+            break
+
+        params['Limit'] = needed
+
+        response = table.query(**params)
+        batch = response.get('Items', [])
+        items.extend(batch)
+
+        last_key = response.get('LastEvaluatedKey')
+
+        # 1. No more data in DB matching query -> Break
+        if not last_key:
+            break
+
+        # 2. Update start key for next iteration
+        params['ExclusiveStartKey'] = last_key
+
+    # Extract next_timestamp only if we have a continuation key
+    # AND we actually have items (safety check)
+    next_timestamp = None
+    if last_key and 'time' in last_key:
+        next_timestamp = int(last_key['time'])
+
+    return items, next_timestamp

@@ -12,10 +12,10 @@ os.environ['AWS_DEFAULT_REGION'] = 'eu-central-1'
 from lambda_function import lambda_handler
 
 # --- CONFIGURATION ---
-TEST_TOPIC = 'acc'
+TEST_TOPIC = 'data'
 TEST_ID = 'ASENSE00000022'
-TEST_START = '1763722800000'
-TEST_END = '1763728200000'
+TEST_START = '1764612000000'
+TEST_END = '1764633600000'
 MERGE = 'true'
 
 # Options: 'map', 'tuple_array', 'dict_array'

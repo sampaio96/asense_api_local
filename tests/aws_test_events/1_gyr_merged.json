@@ -4,8 +4,7 @@
         "id": "ASENSE00000005",
         "start_time": "1764086400000",
         "end_time": "1764090000000",
-        "minute": "0",
-        "merge_by_hour": "true",
+        "merge": "true",
         "output_format": "map"
     }
 }

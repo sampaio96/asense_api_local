@@ -20,7 +20,7 @@ SCENARIOS = [
             "id": "ASENSE00000005",
             "start": "2025-11-25 16:00:00",
             "end": "2025-11-25 17:00:00",
-            "merge_by_hour": "true",
+            "merge": "true",
             "output_format": "map"
         }
     },
@@ -31,7 +31,7 @@ SCENARIOS = [
             "id": "ASENSE00000005",
             "start": "2025-11-25 16:00:00",
             "end": "2025-11-25 17:00:00",
-            "merge_by_hour": "true",
+            "merge": "true",
             "output_format": "map"
         }
     },
@@ -42,7 +42,7 @@ SCENARIOS = [
             "id": "ASENSE00000017",
             "start": "2025-11-24 00:00:00",
             "end": "2025-11-25 23:59:59",
-            "merge_by_hour": "true",
+            "merge": "true",
             "output_format": "map"
         }
     },
@@ -53,7 +53,7 @@ SCENARIOS = [
             "id": "ASENSE00000003",
             "start": "2025-11-25 12:00:00",
             "end": "2025-11-25 13:00:00",
-            "merge_by_hour": "false",
+            "merge": "false",
             "output_format": "map"
         }
     },
@@ -64,7 +64,7 @@ SCENARIOS = [
             "id": "ASENSE00000005",
             "start": "2025-11-25 16:00:00",
             "end": "2025-11-25 17:00:00",
-            "merge_by_hour": "true",
+            "merge": "true",
             "output_format": "tuple_array"  # <--- New feature test
         }
     }
@@ -91,8 +91,7 @@ def generate():
                 "id": p['id'],
                 "start_time": str(start_ms),
                 "end_time": str(end_ms),
-                "minute": "0",
-                "merge_by_hour": p['merge_by_hour'],
+                "merge": p['merge'],
                 "output_format": p['output_format']
             }
         }

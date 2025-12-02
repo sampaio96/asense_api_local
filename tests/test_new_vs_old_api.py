@@ -125,7 +125,7 @@ def run_single_test(case, merge_flag):
             'start_time': str(start_ms),
             'end_time': str(end_ms),
             'minute': '0',
-            'merge_by_hour': merge_str,
+            'merge': merge_str,
             'output_format': 'map'  # Enforce legacy format for comparison
         }
     }

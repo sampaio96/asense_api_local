@@ -96,7 +96,7 @@ def lambda_handler(event, context):
             }
 
         # 5. Standard Fetch with Pagination
-        raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time, limit=2048)
+        raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time, limit=64)
 
         print(f"Items fetched: {len(raw_items)}")  # DEBUG LOG
 

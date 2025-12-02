@@ -38,13 +38,7 @@ def query_paginated(table_name, id_value, start_time, end_time, limit=2048):
 
     items = []
     last_key = None
-
-    params = {
-        'KeyConditionExpression': key_condition,
-        # We set an initial limit, but we must update it in the loop
-        # to avoid over-fetching if we only need a few more items.
-        'Limit': limit
-    }
+    params = {'KeyConditionExpression': key_condition, 'Limit': limit}
 
     while True:
         # Update limit to fetch only what we need to reach the target
@@ -71,6 +65,7 @@ def query_paginated(table_name, id_value, start_time, end_time, limit=2048):
     # AND we actually have items (safety check)
     next_timestamp = None
     if last_key and 'time' in last_key:
-        next_timestamp = int(last_key['time'])
+        # ADD +1 TO AVOID OVERLAP
+        next_timestamp = int(last_key['time']) + 1
 
     return items, next_timestamp

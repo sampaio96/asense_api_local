@@ -5,8 +5,14 @@ from db import access
 from processors import factory
 from utils import mergers
 
-
 def lambda_handler(event, context):
+    # DEFINING CORS HEADERS - CRITICAL FIX
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*', # Allows all domains (including v0)
+        'Access-Control-Allow-Headers': 'Content-Type,X-Api-Key,Authorization',
+        'Access-Control-Allow-Methods': 'OPTIONS,GET'
+    }
+
     query_params = event.get('queryStringParameters') or {}
 
     # 1. Parse Parameters
@@ -26,7 +32,11 @@ def lambda_handler(event, context):
         output_format = 'map'
 
     if not all([topic, id_value]):
-        return {'statusCode': 400, 'body': json.dumps({'error': 'Missing required parameters'})}
+        return {
+            'statusCode': 400, 
+            'headers': cors_headers, 
+            'body': json.dumps({'error': 'Missing required parameters'})
+        }
 
     # 2. Route Health Check
     if topic == 'health':
@@ -36,9 +46,17 @@ def lambda_handler(event, context):
             result = access.query_health_status('asense_table_req_resp', id_value, start, end)
             timestamps = [int(item['time']) for item in result]
             dt_strings = [datetime.datetime.utcfromtimestamp(ts / 1000).isoformat() + 'Z' for ts in timestamps]
-            return {'statusCode': 200, 'body': json.dumps({'timestamps': timestamps, 'datetime_strings': dt_strings})}
+            return {
+                'statusCode': 200, 
+                'headers': cors_headers,
+                'body': json.dumps({'timestamps': timestamps, 'datetime_strings': dt_strings})
+            }
         except Exception as e:
-            return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+            return {
+                'statusCode': 500, 
+                'headers': cors_headers,
+                'body': json.dumps({'error': str(e)})
+            }
 
     # 3. Validate Time
     try:
@@ -46,7 +64,11 @@ def lambda_handler(event, context):
         end_time = int(end_time_str)
         minute = int(minute_str)
     except (ValueError, TypeError):
-        return {'statusCode': 400, 'body': json.dumps({'error': 'Invalid time parameters'})}
+        return {
+            'statusCode': 400, 
+            'headers': cors_headers,
+            'body': json.dumps({'error': 'Invalid time parameters'})
+        }
 
     # 4. Map Topic
     table_name = f"asense_table_{topic}"
@@ -62,12 +84,20 @@ def lambda_handler(event, context):
             raw_items = access.query_standard(table_name, id_value, start_time, end_time)
 
         if not raw_items:
-            return {'statusCode': 200, 'body': json.dumps([])}
+            return {
+                'statusCode': 200, 
+                'headers': cors_headers,
+                'body': json.dumps([])
+            }
 
         # 6. Process Data (Pass output_format)
         processor = factory.get_processor(topic)
         if not processor:
-            return {'statusCode': 400, 'body': json.dumps({'error': f'Unknown topic: {topic}'})}
+            return {
+                'statusCode': 400, 
+                'headers': cors_headers,
+                'body': json.dumps({'error': f'Unknown topic: {topic}'})
+            }
 
         # Inject format here!
         processed_items = processor.process(raw_items, fmt=output_format)
@@ -91,6 +121,7 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            'headers': cors_headers, # <--- THIS IS WHAT YOU WERE MISSING
             'body': json.dumps(final_list)
         }
 
@@ -98,5 +129,6 @@ def lambda_handler(event, context):
         traceback.print_exc()
         return {
             'statusCode': 500,
+            'headers': cors_headers,
             'body': json.dumps({'error': f"Internal Server Error: {str(e)}"})
         }

@@ -12,3 +12,6 @@ __pycache__/
 # Virtual Env
 .venv/
 venv/
+
+# Test files
+*.csv

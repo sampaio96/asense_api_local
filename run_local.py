@@ -14,11 +14,11 @@ from lambda_function import lambda_handler
 # --- CONFIGURATION ---
 TEST_TOPIC = 'data'
 TEST_ID = 'ASENSE00000022'
-TEST_START = '1764612000000'
-TEST_END = '1764633600000'
+TEST_START = '1764201600000'
+TEST_END = '1764468000000'
 MERGE = 'true'
 
-# Options: 'map', 'tuple_array', 'dict_array'
+# Options: 'map', 'tuple_array', 'dict_array', 'combined_tuple', 'combined_dict'
 FORMAT = 'tuple_array'
 
 event = {

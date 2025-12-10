@@ -3,7 +3,7 @@ import datetime
 import traceback
 from db import access
 from processors import factory
-from utils import mergers
+from utils import mergers, formatters, corrector
 
 
 def lambda_handler(event, context):
@@ -28,9 +28,13 @@ def lambda_handler(event, context):
     merge_param = str(query_params.get('merge', 'true')).lower()
     merge = merge_param != 'false'
 
-    # Output Format: 'map' (default), 'tuple_array', 'dict_array'
+    # Feature Flag for Correction
+    enable_correction_param = str(query_params.get('enable_correction', 'true')).lower()
+    enable_correction = enable_correction_param != 'false'
+
+    # Output Format: 'map' (default), 'tuple_array', 'dict_array', 'combined_tuple', 'combined_dict'
     output_format = query_params.get('output_format', 'map')
-    valid_formats = ['map', 'tuple_array', 'dict_array']
+    valid_formats = ['map', 'tuple_array', 'dict_array', 'combined_tuple', 'combined_dict']
     if output_format not in valid_formats:
         output_format = 'map'
 
@@ -96,7 +100,7 @@ def lambda_handler(event, context):
             }
 
         # 5. Standard Fetch with Pagination
-        raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time, limit=64)
+        raw_items, next_timestamp = access.query_paginated(table_name, id_value, start_time, end_time)
 
         print(f"Items fetched: {len(raw_items)}")  # DEBUG LOG
 
@@ -116,19 +120,36 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': f'Unknown topic: {topic}'})
             }
 
-        processed_items = processor.process(raw_items, fmt=output_format)
+        processed_items = processor.process(raw_items)  # use the internal format ('dict_array')
 
-        # 7. Sort
+        # 7. Sort (Critical for delta calculation)
         processed_items.sort(key=lambda x: x.get('time', 0))
 
-        # 8. Merge
+        # 8. Correct Timestamps
+        # We apply correction ONLY to high-freq sensor data where this 1280ms packet logic applies.
+        if enable_correction and topic in ['acc', 'gyr', 'ain']:
+             print(f"--- Applying Timestamp Correction (Batch: {len(processed_items)}) ---")
+             processed_items = corrector.apply_correction(processed_items)
+        else:
+             print(f"--- Timestamp Correction SKIPPED (Enabled: {enable_correction}, Topic: {topic}) ---")
+
+        # 9. Merge
         if merge:
-            if topic == 'fft':
+            if topic == 'data':
+                # do not merge
+                pass
+            elif topic == 'fft':
                 processed_items = mergers.merge_fft_axes_by_hour(processed_items)
             else:
-                processed_items = mergers.merge_items_by_hour(processed_items)
+                if processed_items:
+                    processed_items = [mergers.merge_items_in_group(processed_items)]
+                else:
+                    processed_items = []
+                # Old function: merge by hour. No longer needed since we don't rely on seq number to calculate timestamps.
+                # The previous method required the seq number to be unique within the hour, and possibly to reset each hour.
+                # processed_items = mergers.merge_items_by_hour(processed_items)
 
-        # 9. Final Formatting (Enrich & Cleanup)
+        # 10. Final Formatting (Enrich & Cleanup)
         final_list = []
         for item in processed_items:
             # A. Generate Datetime String (The "Anchor")
@@ -140,14 +161,19 @@ def lambda_handler(event, context):
             # We remove variable fields to clean up the root object, but keep 'datetime' as the human-readable anchor.
             if topic in ['acc', 'gyr', 'ain']:
                 item.pop('time', None)
-                if merge:
-                    # Remove fields not needed after merging
-                    for field in ['seq', 'odr', 'scale']:
-                        item.pop(field, None)
 
-            final_list.append(dict(sorted(item.items())))
+            if merge:
+                # Remove fields not needed after merging
+                for field in ['seq', 'odr', 'scale']:
+                    item.pop(field, None)
 
-        # 10. Construct Response
+            # C. CONVERT FORMAT (The new step)
+            # This transforms the dict_arrays into map/tuple_array if requested
+            formatted_item = formatters.convert_item_format(item, output_format)
+
+            final_list.append(dict(sorted(formatted_item.items())))
+
+        # 11. Construct Response
         response_body = {
             'data': final_list
         }

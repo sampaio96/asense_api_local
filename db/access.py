@@ -26,7 +26,7 @@ def query_health_status(table_name, id_value, start_time=None, end_time=None):
     return response.get('Items', [])
 
 
-def query_paginated(table_name, id_value, start_time, end_time, limit=2048):
+def query_paginated(table_name, id_value, start_time, end_time, limit=32):
     """
     Queries DynamoDB using ID + Time index.
     Accumulates items until 'limit' is reached or data is exhausted.

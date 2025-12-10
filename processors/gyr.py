@@ -2,7 +2,7 @@ import math
 from utils.formatters import DataBuilder
 
 
-def process(raw_items, fmt='map'):
+def process(raw_items, fmt='dict_array'):
     processed_list = []
 
     for event in raw_items:

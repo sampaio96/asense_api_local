@@ -133,6 +133,7 @@ def run_single_test(case, merge_flag):
     try:
         local_resp = lambda_handler(event, None)
         local_json = json.loads(local_resp['body'])
+        local_json = local_json.get('data', [])
     except Exception as e:
         print(f"⛔ [FAIL] Local Exception: {str(e)}")
         return

@@ -33,9 +33,10 @@ def _log_table(rows, title):
         logger.info(f"{i:<4} | {t:<15} | {d:<8} | {status}")
 
 
-def apply_correction(items):
+def apply_correction(items, auto_odr=False):
     """
-    Corrects timestamp anomalies in a sorted list of sensor packets using a Median Filter.
+    Corrects timestamp anomalies in a sorted list of sensor packets using a Median Filter,
+    and optionally recalibrates internal sample spacing (Auto ODR).
 
     Algorithm:
     1. Calculate Local ODR (Median) from valid deltas (<= 1408ms).
@@ -44,9 +45,11 @@ def apply_correction(items):
        - Current Delta <= Thresh_Short
        - Previous Delta >= Thresh_Long
     4. Fix: Shift row[i-1] so Current Delta matches Median exactly.
+    5. If auto_odr=True, iterate again to recalibrate sample spacing.
 
     Args:
         items: List of dicts (processed rows). Each row has 'time' and vector keys.
+        auto_odr: If True, uses actual Median and recalibrates samples.
     """
     if len(items) < 3:
         return items
@@ -63,7 +66,7 @@ def apply_correction(items):
     if raw_deltas:
         median_delta = statistics.median(raw_deltas)
     else:
-        median_delta = 1280.0  # Fallback to standard if all are discontinuities
+        median_delta = 1280.0  # Fallback or Forced Standard
 
     # --- Step 2: Calculate Dynamic Thresholds (1.5% Rule) ---
     # 1.5% of 1280 is 19.2ms (approx 1 sample duration)
@@ -111,6 +114,7 @@ def apply_correction(items):
             print(f"      Row[{i-1}] Delta: {delta_prev} (>= {thresh_long:.1f})")
             print(f"      ACTION: Shifting Row[{i-1}] backwards by {shift_int}ms")
 
+            # Step 4: Apply Correction
             # 1. Fix Root Timestamp
             items[i - 1]['time'] -= shift_int
 
@@ -121,6 +125,10 @@ def apply_correction(items):
 
     if count_fixed > 0:
         logger.info(f"Timestamp Correction: Fixed {count_fixed} anomalies using Median={median_delta:.2f}.")
+
+    # --- Step 5: Auto ODR Recalibration ---
+    if auto_odr:
+        _recalibrate_samples(items)
 
     return items
 
@@ -135,3 +143,43 @@ def _shift_vector_timestamps(item, offset):
             for sample in item[key]:
                 if 'time' in sample:
                     sample['time'] += offset
+
+
+def _recalibrate_samples(items):
+    """
+    Recalculates the timestamp of every sample in the vectors
+    based on the specific delta to the previous packet.
+    """
+    # We iterate from 1 because we need the delta (t_i - t_i-1)
+    # The first packet (idx 0) cannot be auto-calibrated as it has no predecessor reference.
+    # It remains with the Standard ODR (50Hz) from the Processor.
+
+    calibrated_count = 0
+
+    for i in range(1, len(items)):
+        t_curr = items[i]['time']
+        t_prev = items[i - 1]['time']
+        delta = t_curr - t_prev
+
+        # Bounds check (approx 1280 +/- 10%)
+        # If delta is huge (packet loss), we DO NOT stretch.
+        if 1152 <= delta <= 1408:
+            calibrated_count += 1
+            # Recalibrate all vectors in this item
+            for key in VECTOR_KEYS:
+                if key in items[i] and isinstance(items[i][key], list):
+                    samples = items[i][key]
+                    count = len(samples)
+                    if count > 1:
+                        # Calculate specific period for this packet
+                        period = delta / count
+
+                        # Re-distribute samples
+                        # Last sample is at t_curr
+                        # Sample[k] is at t_curr - (count - 1 - k) * period
+                        for k, sample in enumerate(samples):
+                            steps_back = (count - 1) - k
+                            new_time = t_curr - (steps_back * period)
+                            sample['time'] = new_time
+
+    # logger.info(f"Auto ODR: Recalibrated {calibrated_count} packets.")

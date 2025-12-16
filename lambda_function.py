@@ -32,6 +32,10 @@ def lambda_handler(event, context):
     enable_correction_param = str(query_params.get('enable_correction', 'true')).lower()
     enable_correction = enable_correction_param != 'false'
 
+    # Feature Flag for Auto ODR
+    auto_odr_param = str(query_params.get('auto_odr', 'false')).lower()
+    auto_odr = auto_odr_param == 'true'
+
     # Output Format: 'map' (default), 'tuple_array', 'dict_array', 'combined_tuple', 'combined_dict'
     output_format = query_params.get('output_format', 'map')
     valid_formats = ['map', 'tuple_array', 'dict_array', 'combined_tuple', 'combined_dict']
@@ -128,8 +132,8 @@ def lambda_handler(event, context):
         # 8. Correct Timestamps
         # We apply correction ONLY to high-freq sensor data where this 1280ms packet logic applies.
         if enable_correction and topic in ['acc', 'gyr', 'ain']:
-             print(f"--- Applying Timestamp Correction (Batch: {len(processed_items)}) ---")
-             processed_items = corrector.apply_correction(processed_items)
+             print(f"--- Applying Timestamp Correction (Batch: {len(processed_items)}, AutoODR: {auto_odr}) ---")
+             processed_items = corrector.apply_correction(processed_items, auto_odr=auto_odr)
         else:
              print(f"--- Timestamp Correction SKIPPED (Enabled: {enable_correction}, Topic: {topic}) ---")
 

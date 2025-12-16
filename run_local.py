@@ -12,7 +12,7 @@ os.environ['AWS_DEFAULT_REGION'] = 'eu-central-1'
 from lambda_function import lambda_handler
 
 # --- CONFIGURATION ---
-TEST_TOPIC = 'data'
+TEST_TOPIC = 'acc'
 TEST_ID = 'ASENSE00000022'
 TEST_START = '1764201600000'
 TEST_END = '1764468000000'

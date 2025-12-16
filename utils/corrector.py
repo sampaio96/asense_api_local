@@ -1,5 +1,6 @@
 # utils/corrector.py
 import logging
+import statistics
 
 # Keys that contain time-series data (lists of dicts with 'time')
 # scalar keys like 'tamb' are also lists in the internal format
@@ -34,13 +35,15 @@ def _log_table(rows, title):
 
 def apply_correction(items):
     """
-    Corrects timestamp anomalies in a sorted list of sensor packets.
+    Corrects timestamp anomalies in a sorted list of sensor packets using a Median Filter.
 
-    Algorithm (Case 2 - Look Back):
-    1. Trigger: Current Delta (i - i-1) <= 1260ms.
-    2. Confirm: Previous Delta (i-1 - i-2) >= 1300ms.
-    3. Fix: Shift row[i-1] BACKWARDS so Current Delta becomes exactly 1280ms.
-       This simultaneously fixes the short gap and reduces the previous long gap.
+    Algorithm:
+    1. Calculate Local ODR (Median) from valid deltas (<= 1408ms).
+    2. Determine Dynamic Thresholds (Median +/- 1.5%).
+    3. Iterate to find 'Late Timestamp' signature:
+       - Current Delta <= Thresh_Short
+       - Previous Delta >= Thresh_Long
+    4. Fix: Shift row[i-1] so Current Delta matches Median exactly.
 
     Args:
         items: List of dicts (processed rows). Each row has 'time' and vector keys.
@@ -48,8 +51,29 @@ def apply_correction(items):
     if len(items) < 3:
         return items
 
-    # Optional: Log before state
-    # _log_table(items, "Before Correction")
+    # --- Step 1: Establish Local Pulse (Median) ---
+    raw_deltas = []
+    # Calculate all raw deltas first
+    for i in range(1, len(items)):
+        d = items[i]['time'] - items[i - 1]['time']
+        # Filter: Exclude discontinuities (> 1280 + 10%)
+        if d <= 1408:
+            raw_deltas.append(d)
+
+    if raw_deltas:
+        median_delta = statistics.median(raw_deltas)
+    else:
+        median_delta = 1280.0  # Fallback to standard if all are discontinuities
+
+    # --- Step 2: Calculate Dynamic Thresholds (1.5% Rule) ---
+    # 1.5% of 1280 is 19.2ms (approx 1 sample duration)
+    # Using strict inequalities in logic implies:
+    # Short: <= Median - 1.5%
+    # Long:  >= Median + 1.5%
+    thresh_short = median_delta * (1 - 0.015)
+    thresh_long = median_delta * (1 + 0.015)
+
+    # logger.info(f"Corrector Config: Median={median_delta:.2f}, Short<={thresh_short:.2f}, Long>={thresh_long:.2f}")
 
     count_fixed = 0
 
@@ -62,33 +86,41 @@ def apply_correction(items):
         delta_curr = t_curr - t_prev
         delta_prev = t_prev - t_pprev
 
-        # The Logic:
-        if delta_curr <= 1260 and delta_prev >= 1300:
-            # Calculate correction
-            # We need delta_curr to be 1280.
-            # Current gap is too small. We must move t_prev earlier (smaller).
-            diff_needed = 1280 - delta_curr
+        # --- Step 3: Trigger Logic ---
+        if delta_curr <= thresh_short and delta_prev >= thresh_long:
+            # We fix relative to the CURRENT packet (i), using the MEDIAN.
+            # Target previous time: t_curr - median
+            # Diff needed: how much to shift t_prev BACK to match target
+
+            # Current: t_curr - t_prev = delta_curr
+            # Desired: t_curr - t_new  = median
+            # => t_new = t_curr - median
+            # shift = t_prev - t_new
+            # shift = t_prev - (t_curr - median)
+            # shift = median - (t_curr - t_prev)
+            # shift = median - delta_curr
+
+            diff_needed = median_delta - delta_curr
+
+            # Round to int for timestamps
+            shift_int = int(round(diff_needed))
 
             print(f"  >>> ANOMALY FIX (Idx {i}):")
-            print(f"      Row[{i}] vs Row[{i-1}] Delta: {delta_curr} (Too Short)")
-            print(f"      Row[{i-1}] vs Row[{i-2}] Delta: {delta_prev} (Too Long)")
-            print(f"      ACTION: Shifting Row[{i-1}] backwards by {diff_needed}ms")
+            print(f"      Median: {median_delta:.1f}")
+            print(f"      Row[{i}] Delta: {delta_curr} (<= {thresh_short:.1f})")
+            print(f"      Row[{i-1}] Delta: {delta_prev} (>= {thresh_long:.1f})")
+            print(f"      ACTION: Shifting Row[{i-1}] backwards by {shift_int}ms")
 
             # 1. Fix Root Timestamp
-            items[i - 1]['time'] -= diff_needed
+            items[i - 1]['time'] -= shift_int
 
             # 2. Fix All Internal Samples
-            # Since processors calculated sample times based on the root time,
-            # we must shift them all by the same amount to maintain consistency.
-            _shift_vector_timestamps(items[i - 1], -diff_needed)
+            _shift_vector_timestamps(items[i - 1], -shift_int)
 
             count_fixed += 1
-            # logger.info(f"Fixed row {i-1}: Shifted by -{diff_needed}ms")
 
     if count_fixed > 0:
-        logger.info(f"Timestamp Correction: Fixed {count_fixed} anomalies.")
-        # Optional: Log after state
-        # _log_table(items, "After Correction")
+        logger.info(f"Timestamp Correction: Fixed {count_fixed} anomalies using Median={median_delta:.2f}.")
 
     return items
 

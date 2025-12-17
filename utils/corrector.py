@@ -52,6 +52,10 @@ def apply_correction(items, auto_odr=False):
         auto_odr: If True, uses actual Median and recalibrates samples.
     """
     if len(items) < 3:
+        if auto_odr:
+            calibrated_count = _recalibrate_samples(items)
+            if calibrated_count > 0:
+                logger.info(f"Auto ODR: Recalibrated sample spacing for {calibrated_count} packets.")
         return items
 
     # --- Step 1: Establish Local Pulse (Median) ---
@@ -76,7 +80,7 @@ def apply_correction(items, auto_odr=False):
     thresh_short = median_delta * (1 - 0.015)
     thresh_long = median_delta * (1 + 0.015)
 
-    # logger.info(f"Corrector Config: Median={median_delta:.2f}, Short<={thresh_short:.2f}, Long>={thresh_long:.2f}")
+    logger.info(f"Corrector Config: Median={median_delta:.1f}ms, Thresholds=[{thresh_short:.1f}, {thresh_long:.1f}]")
 
     count_fixed = 0
 
@@ -128,7 +132,9 @@ def apply_correction(items, auto_odr=False):
 
     # --- Step 5: Auto ODR Recalibration ---
     if auto_odr:
-        _recalibrate_samples(items)
+        calibrated_count = _recalibrate_samples(items)
+        if calibrated_count > 0:
+            logger.info(f"Auto ODR: Recalibrated sample spacing for {calibrated_count} packets.")
 
     return items
 
@@ -147,39 +153,34 @@ def _shift_vector_timestamps(item, offset):
 
 def _recalibrate_samples(items):
     """
-    Recalculates the timestamp of every sample in the vectors
-    based on the specific delta to the previous packet.
+    Recalculates sample timestamps for each packet (except the last)
+    based on the time delta to its successor.
     """
     # We iterate from 1 because we need the delta (t_i - t_i-1)
     # The first packet (idx 0) cannot be auto-calibrated as it has no predecessor reference.
     # It remains with the Standard ODR (50Hz) from the Processor.
 
     calibrated_count = 0
+    # Iterate through each packet that has a successor.
+    for i in range(len(items) - 1):
+        delta = items[i + 1]['time'] - items[i]['time']
 
-    for i in range(1, len(items)):
-        t_curr = items[i]['time']
-        t_prev = items[i - 1]['time']
-        delta = t_curr - t_prev
-
-        # Bounds check (approx 1280 +/- 10%)
-        # If delta is huge (packet loss), we DO NOT stretch.
+        # Guardrail: Only stretch/compress if delta is within a reasonable window
         if 1152 <= delta <= 1408:
             calibrated_count += 1
-            # Recalibrate all vectors in this item
+            # Recalibrate all vectors in the CURRENT item (items[i])
             for key in VECTOR_KEYS:
                 if key in items[i] and isinstance(items[i][key], list):
                     samples = items[i][key]
                     count = len(samples)
                     if count > 1:
-                        # Calculate specific period for this packet
-                        period = delta / count
+                        # N samples span N-1 intervals. The total duration is delta.
+                        period = delta / (count - 1)
 
-                        # Re-distribute samples
-                        # Last sample is at t_curr
-                        # Sample[k] is at t_curr - (count - 1 - k) * period
+                        # The first sample should be at t_current - delta
+                        # We recalculate all from the anchor to avoid float drift.
+                        start_time = items[i]['time'] - delta
+
                         for k, sample in enumerate(samples):
-                            steps_back = (count - 1) - k
-                            new_time = t_curr - (steps_back * period)
-                            sample['time'] = new_time
-
-    # logger.info(f"Auto ODR: Recalibrated {calibrated_count} packets.")
+                            sample['time'] = start_time + (k * period)
+    return calibrated_count

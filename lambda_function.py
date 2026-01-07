@@ -131,11 +131,15 @@ def lambda_handler(event, context):
 
         # 8. Correct Timestamps
         # We apply correction ONLY to high-freq sensor data where this 1280ms packet logic applies.
-        if enable_correction and topic in ['acc', 'gyr', 'ain']:
-             print(f"--- Applying Timestamp Correction (Batch: {len(processed_items)}, AutoODR: {auto_odr}) ---")
-             processed_items = corrector.apply_correction(processed_items, auto_odr=auto_odr)
+        if (enable_correction or auto_odr) and topic in ['acc', 'gyr', 'ain']:
+            print(f"--- Running Corrector (Correction: {enable_correction}, AutoODR: {auto_odr}) ---")
+            processed_items = corrector.apply_correction(
+                processed_items,
+                enable_glitch_fix=enable_correction,
+                enable_auto_odr=auto_odr
+            )
         else:
-             print(f"--- Timestamp Correction SKIPPED (Enabled: {enable_correction}, Topic: {topic}) ---")
+            print(f"--- Corrector SKIPPED (Correction: {enable_correction}, AutoODR: {auto_odr}, Topic: {topic}) ---")
 
         # 9. Merge
         if merge:

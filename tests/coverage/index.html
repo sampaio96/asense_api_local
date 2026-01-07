@@ -4,33 +4,322 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>asense IoT Fleet Coverage</title>
+        <title>asense IoT Coverage Dashboard</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-            body { background-color: #0f172a; color: #f8fafc; font-family: ui-sans-serif, system-ui, sans-serif; }
-            .card { background-color: #1e293b; transition: all 0.2s ease-in-out; }
-            .card:hover { transform: translateY(-4px); background-color: #334155; border-color: #10b981; }
+            body { background-color: #0f172a; color: #f8fafc; }
+            .card { background-color: #1e293b; transition: all 0.2s ease; border: 1px solid #334155; }
+            .card:hover { transform: translateY(-4px); border-color: #10b981; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); }
         </style>
     </head>
-    <body class="p-8">
-        <header class="max-w-6xl mx-auto mb-12 flex justify-between items-end">
+    <body class="p-8 font-sans">
+        <header class="max-w-6xl mx-auto mb-16 flex justify-between items-center">
             <div>
-                <h1 class="text-4xl font-extrabold text-emerald-400 mb-2">Fleet Coverage Dashboard</h1>
-                <p class="text-slate-400">Heatmap explorer for high-frequency sensor tables</p>
-            </div>
-            <div class="text-right text-slate-500 text-xs uppercase tracking-widest">
-                Last updated<br>
-                <span class="text-slate-300 font-mono">2026-01-07 18:15</span>
+                <h1 class="text-4xl font-black text-white tracking-tight">IoT Coverage <span class="text-emerald-500">Explorer</span></h1>
+                <p class="text-slate-400 mt-2 font-medium">Visualizing sensor uptime across fleet tables.</p>
             </div>
         </header>
 
         <main class="max-w-6xl mx-auto">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                
+                <a href="heatmap_ACC_FINAL_20260101_000000_to_20260131_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        ACC
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        January 2026
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_AIN_FINAL_20260101_000000_to_20260131_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        AIN
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        January 2026
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_GYR_FINAL_20260101_000000_to_20260131_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        GYR
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        January 2026
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_ACC_FINAL_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        ACC
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_AIN_FINAL_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        AIN
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_GYR_FINAL_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        GYR
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_GYR_PROTO_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-slate-500/50 text-slate-400 bg-slate-500/10">
+                            Old Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        GYR
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_AIN_PROTO_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-slate-500/50 text-slate-400 bg-slate-500/10">
+                            Old Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        AIN
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_ACC_PROTO_20251201_000000_to_20251231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-slate-500/50 text-slate-400 bg-slate-500/10">
+                            Old Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        ACC
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2025
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_AIN_FINAL_20241201_000000_to_20241231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        AIN
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2024
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_ACC_FINAL_20241201_000000_to_20241231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        ACC
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2024
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
+                
+                <a href="heatmap_GYR_FINAL_20241201_000000_to_20241231_235959_60min_FLEET.html" target="_blank" class="card p-8 rounded-3xl block group">
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border 
+                            border-emerald-500/50 text-emerald-400 bg-emerald-500/10">
+                            New Table
+                        </div>
+                        <div class="text-slate-600 font-mono text-[10px]">60min</div>
+                    </div>
+
+                    <h2 class="text-4xl font-black text-white group-hover:text-emerald-400 transition-colors mb-2 uppercase">
+                        GYR
+                    </h2>
+                    <p class="text-slate-400 font-bold tracking-tight mb-8">
+                        December 2024
+                    </p>
+
+                    <div class="flex items-center text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                        View Report
+                        <svg class="w-4 h-4 ml-2 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </div>
+                </a>
                 
             </div>
 
-            <div class="text-center py-20 text-slate-600 italic">No fleet reports found in coverage.</div>
+            
         </main>
+
+        <footer class="max-w-6xl mx-auto mt-32 pt-8 border-t border-slate-800 flex justify-between text-slate-600 text-[10px] uppercase font-bold tracking-widest">
+            <div>ASENSE IoT Systems</div>
+            <div>Generated: 2026-01-07 18:19</div>
+        </footer>
     </body>
     </html>
     
